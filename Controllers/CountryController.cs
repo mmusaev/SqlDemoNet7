@@ -4,6 +4,7 @@ using SqlDemo.Models;
 using System.Diagnostics;
 using System.Web.Mvc;
 using Controller = Microsoft.AspNetCore.Mvc.Controller;
+using Microsoft.Azure.Services.AppAuthentication;
 
 namespace SqlDemo.Controllers
 {
@@ -11,7 +12,7 @@ namespace SqlDemo.Controllers
     {
         private readonly ILogger<CountryController> _logger;
         private readonly IConfiguration _configuration;
- 
+
         private string? _connectionString = string.Empty;// @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=WAFDB;Integrated Security=True;Connect Timeout=30;";
 
         public CountryController(ILogger<CountryController> logger, IConfiguration configuration)
@@ -21,13 +22,16 @@ namespace SqlDemo.Controllers
             _connectionString = _configuration["ConnectionStrings:SqlCon"];
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             var capitals = new List<CountryInfo>();
 
             using (var sqlConnection = new SqlConnection(_connectionString))
             {
                 var sqlCommand = new SqlCommand("SELECT Country, Capital FROM CountryInfo", sqlConnection);
+
+                var accessToken = await (new AzureServiceTokenProvider()).GetAccessTokenAsync("https://database.windows.net");
+                sqlConnection.AccessToken = accessToken;
 
                 sqlConnection.Open();
 
@@ -36,10 +40,10 @@ namespace SqlDemo.Controllers
                 while (reader.Read())
                 {
                     capitals.Add(new CountryInfo
-                        {
-                            Country = (string)reader["Country"],
-                            Capital = (string)reader["Capital"]
-                        }
+                    {
+                        Country = (string)reader["Country"],
+                        Capital = (string)reader["Capital"]
+                    }
                     );
                 }
 
@@ -59,7 +63,7 @@ namespace SqlDemo.Controllers
         // POST: Country/Create
         [Microsoft.AspNetCore.Mvc.HttpPost]
         [ValidateInput(false)]
-        public IActionResult Create(IFormCollection collection)
+        public async Task<IActionResult> Create(IFormCollection collection)
         {
             using (var sqlConnection = new SqlConnection(_connectionString))
             {
@@ -67,6 +71,8 @@ namespace SqlDemo.Controllers
                                     $"VALUES ('{collection["Country"]}', '{collection["Capital"]}')";
                 var sqlCommand = new SqlCommand(insertCommand, sqlConnection);
 
+                var accessToken = await (new AzureServiceTokenProvider()).GetAccessTokenAsync("https://database.windows.net");
+                sqlConnection.AccessToken = accessToken;
                 sqlConnection.Open();
 
                 sqlCommand.ExecuteNonQuery();
