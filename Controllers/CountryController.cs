@@ -2,29 +2,32 @@
 using Microsoft.AspNetCore.Mvc;
 using SqlDemo.Models;
 using System.Diagnostics;
-using System.Web.Mvc;
 using Controller = Microsoft.AspNetCore.Mvc.Controller;
+
+using System.Web.Mvc;
 
 namespace SqlDemo.Controllers
 {
+    [Authorize]
     public class CountryController : Controller
     {
         private readonly ILogger<CountryController> _logger;
         private readonly IConfiguration _configuration;
- 
-        private string? _connectionString = string.Empty;// @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=WAFDB;Integrated Security=True;Connect Timeout=30;";
+
+        private string? _connectionString =   @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=WAFDB;Integrated Security=True;Connect Timeout=30;";
 
         public CountryController(ILogger<CountryController> logger, IConfiguration configuration)
         {
             _logger = logger;
             _configuration = configuration;
-            _connectionString = _configuration["ConnectionStrings:SqlCon"];
+            //_connectionString = _configuration.GetConnectionString("DefaultConnection");
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var capitals = new List<CountryInfo>();
+            ViewData["Secret"] = _configuration["mySecret2"];
 
+            var capitals = new List<CountryInfo>();
             using (var sqlConnection = new SqlConnection(_connectionString))
             {
                 var sqlCommand = new SqlCommand("SELECT Country, Capital FROM CountryInfo", sqlConnection);
@@ -36,10 +39,10 @@ namespace SqlDemo.Controllers
                 while (reader.Read())
                 {
                     capitals.Add(new CountryInfo
-                        {
-                            Country = (string)reader["Country"],
-                            Capital = (string)reader["Capital"]
-                        }
+                    {
+                        Country = (string)reader["Country"],
+                        Capital = (string)reader["Capital"]
+                    }
                     );
                 }
 
@@ -50,24 +53,22 @@ namespace SqlDemo.Controllers
             return View(capitals);
         }
 
-        // GET: Country/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Country/Create
         [Microsoft.AspNetCore.Mvc.HttpPost]
         [ValidateInput(false)]
-        public IActionResult Create(IFormCollection collection)
+        public async Task<IActionResult> Create(IFormCollection collection)
         {
             using (var sqlConnection = new SqlConnection(_connectionString))
             {
+                sqlConnection.Open();
+
                 var insertCommand = $"INSERT INTO CountryInfo (Country, Capital) " +
                                     $"VALUES ('{collection["Country"]}', '{collection["Capital"]}')";
                 var sqlCommand = new SqlCommand(insertCommand, sqlConnection);
-
-                sqlConnection.Open();
 
                 sqlCommand.ExecuteNonQuery();
 
