@@ -2,9 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using SqlDemo.Models;
 using System.Diagnostics;
-using Controller = Microsoft.AspNetCore.Mvc.Controller;
-
 using System.Web.Mvc;
+using Controller = Microsoft.AspNetCore.Mvc.Controller;
+using Microsoft.Azure.Services.AppAuthentication;
+
 
 namespace SqlDemo.Controllers
 {
@@ -14,13 +15,13 @@ namespace SqlDemo.Controllers
         private readonly ILogger<CountryController> _logger;
         private readonly IConfiguration _configuration;
 
-        private string? _connectionString =   @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=WAFDB;Integrated Security=True;Connect Timeout=30;";
+        private string? _connectionString = string.Empty;//   @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=WAFDB;Integrated Security=True;Connect Timeout=30;";
 
         public CountryController(ILogger<CountryController> logger, IConfiguration configuration)
         {
             _logger = logger;
             _configuration = configuration;
-            //_connectionString = _configuration.GetConnectionString("DefaultConnection");
+            _connectionString = configuration["ConnectionStrings:SqlCon"];
         }
 
         public async Task<IActionResult> Index()
@@ -31,6 +32,9 @@ namespace SqlDemo.Controllers
             using (var sqlConnection = new SqlConnection(_connectionString))
             {
                 var sqlCommand = new SqlCommand("SELECT Country, Capital FROM CountryInfo", sqlConnection);
+
+                var accessToken = await (new AzureServiceTokenProvider()).GetAccessTokenAsync("https://database.windows.net");
+                sqlConnection.AccessToken = accessToken;
 
                 sqlConnection.Open();
 
@@ -64,7 +68,11 @@ namespace SqlDemo.Controllers
         {
             using (var sqlConnection = new SqlConnection(_connectionString))
             {
+                var accessToken = await (new AzureServiceTokenProvider()).GetAccessTokenAsync("https://database.windows.net");
+                sqlConnection.AccessToken = accessToken;
+
                 sqlConnection.Open();
+
 
                 var insertCommand = $"INSERT INTO CountryInfo (Country, Capital) " +
                                     $"VALUES ('{collection["Country"]}', '{collection["Capital"]}')";

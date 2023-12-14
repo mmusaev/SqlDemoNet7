@@ -8,35 +8,33 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-
-
 // create an HttpClient used for accessing the API
 builder.Services.AddHttpClient("APIClient", client =>
 {
 
 });
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
-})
-    .AddCookie()
-    .AddOktaMvc(new OktaMvcOptions
-    {
-        OktaDomain = builder.Configuration.GetValue<string>("Okta:OktaDomain"),
+//builder.Services.AddAuthentication(options =>
+//{
+//    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+//    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+//    options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+//})
+//    .AddCookie()
+//    .AddOktaMvc(new OktaMvcOptions
+//    {
+//        OktaDomain = builder.Configuration.GetValue<string>("Okta:OktaDomain"),
 
-        ClientId = builder.Configuration.GetValue<string>("Okta:ClientId"),
+//        ClientId = builder.Configuration.GetValue<string>("Okta:ClientId"),
 
-        ClientSecret = builder.Configuration.GetValue<string>("Okta:ClientSecret"),
+//        ClientSecret = builder.Configuration.GetValue<string>("Okta:ClientSecret"),
 
-        AuthorizationServerId = builder.Configuration.GetValue<string>("Okta:AuthorizationServerId"),
+//        AuthorizationServerId = builder.Configuration.GetValue<string>("Okta:AuthorizationServerId"),
 
-        CallbackPath = builder.Configuration.GetValue<string>("Okta:CallbackPath"),
+//        CallbackPath = builder.Configuration.GetValue<string>("Okta:CallbackPath"),
 
-        Scope = builder.Configuration.GetValue<string>("Okta:Scopes").Split(",").Select(p => p).ToList()
-    });
+//        Scope = builder.Configuration.GetValue<string>("Okta:Scopes").Split(",").Select(p => p).ToList()
+//    });
 
 
 var app = builder.Build();
@@ -49,18 +47,18 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthentication();
+//app.UseAuthentication();
 
 
-app.UseAuthorization();
+//app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=SignIn}/{id?}");
+    pattern: "{controller=Country}/{action=Index}/{id?}");
 
 app.Run();
